@@ -20,5 +20,5 @@ app.set('view engine', 'mustache');
 app.use(express.static('public'));
 
 app.get('/', (req, res) => {
-  res.render('index', {msg: 'hello'})
+  res.render('index', {msg: 'hello world'})
 });
