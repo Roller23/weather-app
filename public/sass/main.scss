@@ -18,11 +18,14 @@ body {
     left: 0px;
     top: 0px;
     height: 100%;
-    width: 30%;
-    background-color: rgba($color: #fff, $alpha: 0.1);
-    -webkit-backdrop-filter: blur(3px);
-    backdrop-filter: blur(3px);
+    width: 35%;
+    background-color: rgba($color: #b5b5b5, $alpha: 0.3);
+    -webkit-backdrop-filter: blur(7px);
+    backdrop-filter: blur(7px);
     padding: 30px;
-    border-right: 1px solid lightgray;
+    border-right: 1px solid #929292;
+    box-shadow: -1px 0px 20px #a1a1a1;
+    text-align: center;
+    color: white
   }
 }
