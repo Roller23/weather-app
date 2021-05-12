@@ -10,6 +10,21 @@ body {
   background-image: url(/images/sky.jpeg);
   background-size: cover;
   background-position: center center;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+}
+.login-container .left {
+  position: absolute;
+  left: 0px;
+  top: 0px;
+  height: 100%;
+  width: 30%;
+  background-color: rgba(255, 255, 255, 0.1);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  padding: 30px;
+  border-right: 1px solid lightgray;
 }
 
 /*# sourceMappingURL=main.css.map */
