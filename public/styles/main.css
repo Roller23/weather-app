@@ -1,0 +1,15 @@
+body {
+  margin: 0px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.login-container {
+  background-image: url(/images/sky.jpeg);
+  background-size: cover;
+  background-position: center center;
+}
+
+/*# sourceMappingURL=main.css.map */

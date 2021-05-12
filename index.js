@@ -23,6 +23,7 @@ app.use(express.urlencoded({extended: true}));
 app.use(express.json());
 
 app.get('/', (req, res) => {
+  return res.render('login');
   res.render('index', {msg: 'hello world'})
 });
 
