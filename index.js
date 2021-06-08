@@ -12,6 +12,8 @@ const client = new Client({
   }
 })
 
+console.log('shh', process.env.DATABASE_URL)
+
 client.connect();
 
 app.engine('mustache', mustacheExpress());
