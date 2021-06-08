@@ -5,14 +5,14 @@ const app = express()
 const mustacheExpress = require('mustache-express')
 const { Client } = require('pg')
 
+const DB_PATH = process.env.DEV_DB || process.env.DATABASE_URL;
+
 const client = new Client({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: DB_PATH,
   ssl: {
     rejectUnauthorized: false
   }
 })
-
-console.log('shh', process.env.DATABASE_URL)
 
 client.connect();
 
