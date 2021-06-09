@@ -8,6 +8,10 @@
     }
     $.post('/login', {login, password}, res => {
       console.log(res);
+      if (res.success) {
+        return window.location.reload();
+      }
+      alert(res.msg);
     });
   });
 
@@ -23,6 +27,10 @@
     }
     $.post('/register', {login, password}, res => {
       console.log(res);
+      if (res.success) {
+        return window.location.reload();
+      }
+      alert(res.msg);
     })
   });
 })();
