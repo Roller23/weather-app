@@ -52,3 +52,27 @@ body {
     }
   }
 }
+
+.app {
+  position: fixed;
+  top: 0px;
+  left: 0px;
+  width: 100vw;
+  height: 100vh;
+  overflow: auto;
+  background-image: url(/images/blue_sky.webp);
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+
+  .topbar {
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    padding: 20px 30px;
+    color: white;
+    background-color: rgba(white, 0.3);
+    backdrop-filter: blur(3px);
+  }
+}

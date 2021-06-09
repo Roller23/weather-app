@@ -53,7 +53,9 @@ app.get('/', (req, res) => {
   if (req.session.logged) {
     return res.render('index')
   }
-  res.render('login');
+  res.render('login', {
+    username: req.session.login
+  });
 });
 
 app.post('/login', async (req, res) => {
