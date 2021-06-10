@@ -2,12 +2,14 @@ require('dotenv').config();
 
 const express = require('express')
 const app = express()
+const server = require('http').createServer(app);
+const io = require('socket.io')(server);
 const session = require('express-session')
 const mustacheExpress = require('mustache-express')
-const { Client } = require('pg')
+const {Client} = require('pg')
 
 const fetch = require('node-fetch');
-
+const {v4: uuidv4} = require('uuid');
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
@@ -127,7 +129,9 @@ app.post('/login', async (req, res) => {
   await client.query('update users set last_visit = $1 where login = $2', [now, login])
   req.session.logged = true;
   req.session.login = login;
+  req.session.token = uuidv4();
   req.session.save();
+  registeredTokens.push(req.session.token)
   res.json({success: true});
 });
 
@@ -153,8 +157,17 @@ app.post('/register', async (req, res) => {
   await client.query('insert into users (login, password, reg_date, last_visit) values ($1, $2, $3, $4)', data)
   req.session.logged = true;
   req.session.login = login;
+  req.session.token = uuidv4();
+  registeredTokens.push(req.session.token)
   req.session.save();
   return res.json({success: true})
+});
+
+app.get('/token', (req, res) => {
+  if (!req.session.logged) {
+    return res.json({success: false, msg: "You're not logged in!"})
+  }
+  res.json({success: true, token: req.session.token})
 });
 
 app.get('/logout', (req, res) => {
@@ -162,8 +175,40 @@ app.get('/logout', (req, res) => {
   res.end();
 });
 
+const registeredTokens = []
+
+const removeToken = token => {
+  const index = registeredTokens.indexOf(token);
+  if (index === -1) return;
+  registeredTokens.splice(index, 1);
+}
+
+io.on('connection', socket => {
+  console.log('socket connected')
+  socket._storage = {}
+  // give the client one minute to authenticate
+  socket._storage.timeout = setTimeout(() => {
+    socket.disconnect();
+  }, 1000 * 60);
+
+  socket.on('disconnect', () => {
+    clearTimeout(socket._storage.timeout);
+    if (!socket._storage.token) return;
+    removeToken(socket._storage.token);
+  });
+
+  socket.on('auth', token => {
+    clearTimeout(socket._storage.timeout);
+    if (!registeredTokens.includes(token)) {
+      return socket.disconnect();
+    }
+    console.log('socket authenticated')
+    socket.emit('connected');
+  });
+});
+
 const port = process.env.DEV_PORT || process.env.PORT || 3000;
 
-app.listen(port, () => {
+server.listen(port, () => {
   console.log(`listening at port ${port}`)
 })
