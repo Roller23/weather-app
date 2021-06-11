@@ -75,4 +75,36 @@ body {
     background-color: rgba(white, 0.3);
     backdrop-filter: blur(3px);
   }
+
+  .container {
+    margin: 10% auto 0px auto;
+    max-width: 1000px;
+    width: 100%;
+    color: white;
+  }
+
+  .options {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .results {
+    text-align: center;
+    table {
+      width: 100%;
+      border-radius: 15px;
+      background-color: rgba(black, 0.3);
+      backdrop-filter: blur(5px);
+      padding: 10px;
+      th, td {
+        padding: 6px 8px;
+      }
+    }
+  }
+
+  #load-data, #load-city {
+    background-color: white;
+    color: black;
+  }
+
 }

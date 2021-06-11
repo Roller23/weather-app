@@ -28,6 +28,8 @@ async function insertWeatherReport(...data) {
   return client.query(query, data)
 }
 
+const cities = ['warszawa', 'lodz', 'wroclaw', 'szczecin', 'rzeszow', 'krakow', 'gdansk', 'suwalki']
+
 async function refreshWeatherData(force = false) {
   if (!force) {
     const lastRefresh = await client.query('select last_refresh from info where id = 1');
@@ -39,7 +41,6 @@ async function refreshWeatherData(force = false) {
     }
   }
   console.log('refreshing data...');
-  const cities = ['warszawa', 'lodz', 'wroclaw', 'szczecin', 'rzeszow', 'krakow', 'gdansk', 'suwalki']
   for (const city of cities) {
     // openweather
     const openweatherApiUrl = `http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.OPENWEATHER_KEY}`;
@@ -71,7 +72,7 @@ async function refreshWeatherData(force = false) {
       // console.log('weatherstack for', city, json)
       const temp = json.current.temperature + '';
       const pressure = json.current.pressure + '';
-      const humidity = Math.floor(json.current.pressure);
+      const humidity = Math.floor(json.current.humidity);
       const precip = json.current.precip + '';
       const wind = json.current.wind_speed + '';
       const windDir = json.current.wind_degree + '';
@@ -91,18 +92,6 @@ const client = new Client({
 })
 
 client.connect();
-
-// client.query('CREATE TABLE weather(id serial, service text not null, city text not null, datetime integer not null, temp text not null, pressure text not null, humidity integer not null, preci text not null, wind text not null, wind_dir text not null);', (err, res) => {
-//   console.log(err, res)
-// });
-
-// client.query('CREATE TABLE users(id serial, login text not null, password text not null, reg_date integer not null, last_visit integer not null, counter integer not null);', (err, res) => {
-//   console.log(err, res)
-// });
-
-// client.query('CREATE table info(id serial, last_refresh integer not null)', (err, res) => {
-//   console.log(err, res)
-// });
 
 // try to refresh every hour
 const refreshDeamon = setInterval(() => {
@@ -208,6 +197,8 @@ app.get('/logout', (req, res) => {
 });
 
 const registeredTokens = []
+const validRanges = ['1', '3', '7']
+const validServices = ['openweather', 'weatherbit', 'weatherstack']
 
 const removeToken = token => {
   const index = registeredTokens.indexOf(token);
@@ -234,6 +225,95 @@ io.on('connection', socket => {
     if (!registeredTokens.includes(token)) {
       return socket.disconnect();
     }
+
+    socket.on('get range data', async data => {
+      console.log('get range data', data)
+      if (!validRanges.includes(data.range) || !validServices.includes(data.service)) {
+        return;
+      }
+      const startFrom = moment().startOf('day');
+      if (data.range === '1') {
+        startFrom.subtract(1, 'days')
+      } else if (data.range === '3') {
+        startFrom.subtract(2, 'days')
+      } else if (data.range === '7') {
+        startFrom.subtract(6, 'days')
+      }
+      const weatherRes = await client.query('select * from weather where service = $1 and datetime > $2 order by id desc', [
+        data.service,
+        startFrom.unix()
+      ]);
+      if (weatherRes.rows.length === 0) return;
+      let dateRange = moment(new Date(weatherRes.rows[0].datetime * 1000)).format('[Today], HH:mm');
+      if (data.range === '3') {
+        dateRange = 'Average of 3 days'
+      } else if (data.range === '7') {
+        dateRange = 'Average of 7 days'
+      }
+      const response = {
+        service: data.service,
+        date: dateRange,
+        range: data.range,
+        cities: {}
+      }
+      if (data.range === '1') {
+        for (const row of weatherRes.rows) {
+          if (!response.cities[row.city]) {
+            response.cities[row.city] = row;
+          }
+          for (const key of Object.keys(response.cities[row.city])) {
+            response.cities[row.city][key] = response.cities[row.city][key] + '';
+          }
+        }
+      } else {
+        let records = 0;
+        for (const row of weatherRes.rows) {
+          if (!response.cities[row.city]) {
+            response.cities[row.city] = row;
+            records++;
+          } else {
+            response.cities[row.city].humidity = +response.cities[row.city].humidity + +row.humidity;
+            response.cities[row.city].pressure = +response.cities[row.city].pressure + +row.pressure;
+            response.cities[row.city].temp = +response.cities[row.city].temp + +row.temp;
+            response.cities[row.city].wind = +response.cities[row.city].wind + +row.wind;
+            response.cities[row.city].wind_dir = +response.cities[row.city].wind_dir + +row.wind_dir;
+            if (!isNaN(response.cities[row.city].preci)) {
+              response.cities[row.city].preci = +response.cities[row.city].preci + +row.preci;
+            }
+            records++;
+          }
+          for (const key of Object.keys(response.cities[row.city])) {
+            response.cities[row.city][key] = response.cities[row.city][key] + '';
+          }
+        }
+        records /= cities.length;
+        for (const city of Object.keys(response.cities)) {
+          for (const key of Object.keys(response.cities[city])) {
+            if (isNaN(response.cities[city][key])) continue;
+            response.cities[city][key] = (+response.cities[city][key] / records) + '';
+          }
+        }
+      }
+      socket.emit('range data', response);
+    });
+
+    socket.on('get city data', async city => {
+      console.log('get city data', city)
+      if (!cities.includes(city)) return;
+      const res = await client.query('select * from weather where city = $1 and datetime > $2 order by id desc', [
+        city,
+        moment().startOf('day').subtract(1, 'days').unix()
+      ]);
+      const response = {city, services: {}}
+      if (res.rows.length === 0) return;
+      for (const row of res.rows) {
+        if (!response.services[row.service]) {
+          response.services[row.service] = row;
+        }
+      }
+      socket.emit('city data', response);
+    })
+
     console.log('socket authenticated')
     socket.emit('connected');
   });

@@ -15,6 +15,43 @@
         Hello {{username}}! You visited this page {{counter}}, last login was on {{lastVisit}}
       </div>
     </div>
+
+    <div class="container">
+      <div class="options">
+        <label for="service-select">Service</label>
+        <select id="service-select">
+          <option value="none" selected disabled>Select service</option>
+          <option value="openweather">OpenWeather</option>
+          <option value="weatherbit">WeatherBit</option>
+          <option value="weatherstack">WeatherStack</option>
+        </select>
+        <label for="time-select">Time range</label>
+        <select id="time-select">
+          <option value="none" selected disabled>Select range</option>
+          <option value="1">Today</option>
+          <option value="3">Last 3 days</option>
+          <option value="7">Last week</option>
+        </select>
+        <button type="button" class="btn" id="load-data">Load</button>
+        <label for="city-select">City</label>
+        <select id="city-select">
+          <option value="none" selected disabled>Select city</option>
+          <option value="warszawa">Warszawa</option>
+          <option value="lodz">Łódź</option>
+          <option value="wroclaw">Wrocław</option>
+          <option value="szczecin">Szczecin</option>
+          <option value="rzeszow">Rzeszów</option>
+          <option value="krakow">Kraków</option>
+          <option value="gdansk">Gdańsk</option>
+          <option value="suwalki">Suwałki</option>
+        </select>
+        <button type="button" class="btn" id="load-city">Load city</button>
+      </div>
+      <div class="results">
+        
+      </div>
+    </div>
+
   </div>
   <script src="https://cdn.socket.io/3.1.3/socket.io.min.js"
   integrity="sha384-cPwlPLvBTa3sKAgddT6krw0cJat7egBga3DJepJyrLl4Q9/5WLra3rrnMcyTyOnh"
