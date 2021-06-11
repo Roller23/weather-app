@@ -8,6 +8,7 @@ const session = require('express-session')
 const mustacheExpress = require('mustache-express')
 const {Client} = require('pg')
 
+const moment = require('moment');
 const fetch = require('node-fetch');
 const {v4: uuidv4} = require('uuid');
 const bcrypt = require('bcrypt');
@@ -40,16 +41,41 @@ async function refreshWeatherData(force = false) {
   console.log('refreshing data...');
   const cities = ['warszawa', 'lodz', 'wroclaw', 'szczecin', 'rzeszow', 'krakow', 'gdansk', 'suwalki']
   for (const city of cities) {
+    // openweather
     const openweatherApiUrl = `http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.OPENWEATHER_KEY}`;
     fetch(openweatherApiUrl).then(response => response.json()).then(async json => {
       // console.log('data for ' + city, json)
       const temp = kelvinToCelsius(json.main.temp) + '';
       const pressure = json.main.pressure + '';
       const humidity = Math.floor(json.main.humidity);
-      const preci = json.precipitation?.value || 'no data';
+      const precip = json.precipitation?.value || 'no data';
       const wind = json.wind.speed + '';
       const windDir = json.wind.deg + '';
-      await insertWeatherReport('openweather', city, time(), temp, pressure, humidity, preci, wind, windDir)
+      await insertWeatherReport('openweather', city, time(), temp, pressure, humidity, precip, wind, windDir)
+    });
+    // weatherbit
+    const weatherbitApiUrl = `https://api.weatherbit.io/v2.0/current?city=${city}&key=${process.env.WEATHERBIT_KEY}`;
+    fetch(weatherbitApiUrl).then(response => response.json()).then(async json => {
+      // console.log('weatherbit for', city, json)
+      const temp = json.data[0].temp + '';
+      const pressure = json.data[0].pres + '';
+      const humidity = Math.floor(json.data[0].rh);
+      const precip = json.data[0].precip + '';
+      const wind = json.data[0].wind_spd + '';
+      const windDir = json.data[0].wind_dir + '';
+      await insertWeatherReport('weatherbit', city, time(), temp, pressure, humidity, precip, wind, windDir)
+    });
+    // weatherstack
+    const weatherstackApiUrl = `http://api.weatherstack.com/current?access_key=${process.env.WEATHERSTACK_KEY}&query=${city}`;
+    fetch(weatherstackApiUrl).then(response => response.json()).then(async json => {
+      // console.log('weatherstack for', city, json)
+      const temp = json.current.temperature + '';
+      const pressure = json.current.pressure + '';
+      const humidity = Math.floor(json.current.pressure);
+      const precip = json.current.precip + '';
+      const wind = json.current.wind_speed + '';
+      const windDir = json.current.wind_degree + '';
+      await insertWeatherReport('weatherstack', city, time(), temp, pressure, humidity, precip, wind, windDir)
     });
   }
   await client.query('update info set last_refresh = $1 where id = 1', [time()])
@@ -70,7 +96,7 @@ client.connect();
 //   console.log(err, res)
 // });
 
-// client.query('CREATE TABLE users(id serial, login text not null, password text not null, reg_date integer not null, last_visit integer not null);', (err, res) => {
+// client.query('CREATE TABLE users(id serial, login text not null, password text not null, reg_date integer not null, last_visit integer not null, counter integer not null);', (err, res) => {
 //   console.log(err, res)
 // });
 
@@ -102,10 +128,16 @@ app.use(session({
   cookie: {secure: false}
 }))
 
-app.get('/', (req, res) => {
+app.get('/', async (req, res) => {
   if (req.session.logged) {
+    await client.query('update users set counter = counter + 1 where login = $1', [req.session.login]) 
+    const userRes = await client.query('select last_visit, counter from users where login = $1', [req.session.login])
+    const user = userRes.rows[0];
+    const counterStr = user.counter === 1 ? '1 time' : `${user.counter} times`;
     return res.render('index', {
-      username: req.session.login
+      username: req.session.login,
+      counter: counterStr,
+      lastVisit: moment(new Date(user.last_visit * 1000)).format('MMMM Do YYYY, h:mm:ss a')
     });
   }
   res.render('login');
@@ -126,7 +158,7 @@ app.post('/login', async (req, res) => {
     return res.json({success: false, msg: 'Incorrect login or password'});
   }
   const now = time();
-  await client.query('update users set last_visit = $1 where login = $2', [now, login])
+  await client.query('update users set last_visit = $1, counter = counter + 1 where login = $2', [now, login])
   req.session.logged = true;
   req.session.login = login;
   req.session.token = uuidv4();
@@ -154,7 +186,7 @@ app.post('/register', async (req, res) => {
   const hash = bcrypt.hashSync(password, saltRounds);
   const now = time();
   const data = [login, hash, now, now];
-  await client.query('insert into users (login, password, reg_date, last_visit) values ($1, $2, $3, $4)', data)
+  await client.query('insert into users (login, password, reg_date, last_visit, counter) values ($1, $2, $3, $4, 1)', data)
   req.session.logged = true;
   req.session.login = login;
   req.session.token = uuidv4();
