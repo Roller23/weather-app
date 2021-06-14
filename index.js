@@ -49,7 +49,7 @@ async function refreshWeatherData(force = false) {
       const temp = kelvinToCelsius(json.main.temp) + '';
       const pressure = json.main.pressure + '';
       const humidity = Math.floor(json.main.humidity);
-      const precip = json.precipitation?.value || 'no data';
+      const precip = json.precipitation?.value || '0';
       const wind = json.wind.speed + '';
       const windDir = json.wind.deg + '';
       await insertWeatherReport('openweather', city, time(), temp, pressure, humidity, precip, wind, windDir)
