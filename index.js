@@ -193,7 +193,7 @@ app.get('/token', (req, res) => {
 
 app.get('/logout', (req, res) => {
   req.session.destroy();
-  res.end();
+  res.redirect('/');
 });
 
 const registeredTokens = []
