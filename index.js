@@ -279,7 +279,10 @@ io.on('connection', socket => {
             response.cities[row.city].temp = +response.cities[row.city].temp + +row.temp;
             response.cities[row.city].wind = +response.cities[row.city].wind + +row.wind;
             response.cities[row.city].wind_dir = +response.cities[row.city].wind_dir + +row.wind_dir;
-            if (!isNaN(response.cities[row.city].preci)) {
+            if (!isNaN(row.preci)) {
+              if (isNaN(response.cities[row.city].preci)) {
+                response.cities[row.city].preci = '0'
+              }
               response.cities[row.city].preci = +response.cities[row.city].preci + +row.preci;
             }
             records++;
