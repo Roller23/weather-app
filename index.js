@@ -45,7 +45,6 @@ async function refreshWeatherData(force = false) {
     // openweather
     const openweatherApiUrl = `http://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${process.env.OPENWEATHER_KEY}`;
     fetch(openweatherApiUrl).then(response => response.json()).then(async json => {
-      // console.log('data for ' + city, json)
       const temp = kelvinToCelsius(json.main.temp) + '';
       const pressure = json.main.pressure + '';
       const humidity = Math.floor(json.main.humidity);
@@ -57,7 +56,6 @@ async function refreshWeatherData(force = false) {
     // weatherbit
     const weatherbitApiUrl = `https://api.weatherbit.io/v2.0/current?city=${city}&key=${process.env.WEATHERBIT_KEY}`;
     fetch(weatherbitApiUrl).then(response => response.json()).then(async json => {
-      // console.log('weatherbit for', city, json)
       const temp = json.data[0].temp + '';
       const pressure = json.data[0].pres + '';
       const humidity = Math.floor(json.data[0].rh);
@@ -69,7 +67,6 @@ async function refreshWeatherData(force = false) {
     // weatherstack
     const weatherstackApiUrl = `http://api.weatherstack.com/current?access_key=${process.env.WEATHERSTACK_KEY}&query=${city}`;
     fetch(weatherstackApiUrl).then(response => response.json()).then(async json => {
-      // console.log('weatherstack for', city, json)
       const temp = json.current.temperature + '';
       const pressure = json.current.pressure + '';
       const humidity = Math.floor(json.current.humidity);
@@ -124,7 +121,6 @@ app.get('/', async (req, res) => {
     const user = userRes.rows[0];
     const counterStr = user.counter === 1 ? '1 time' : `${user.counter} times`;
     const lastVisit = moment(new Date(user.last_visit * 1000));
-    lastVisit.add(2, 'hours')
     return res.render('index', {
       username: req.session.login,
       counter: counterStr,
