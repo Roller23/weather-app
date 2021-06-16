@@ -90,12 +90,11 @@ const client = new Client({
 
 client.connect();
 
-// try to refresh every hour
-const refreshDeamon = setInterval(() => {
-  refreshWeatherData();
-}, 1000 * 60 * 60);
+// const refreshDeamon = setInterval(() => {
+//   refreshWeatherData();
+// }, 1000 * 60 * 60);
 
-refreshWeatherData();
+// refreshWeatherData();
 
 app.engine('mustache', mustacheExpress());
 app.set('views', __dirname + '/public/views/')
