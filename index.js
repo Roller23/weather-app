@@ -123,10 +123,12 @@ app.get('/', async (req, res) => {
     const userRes = await client.query('select last_visit, counter from users where login = $1', [req.session.login])
     const user = userRes.rows[0];
     const counterStr = user.counter === 1 ? '1 time' : `${user.counter} times`;
+    const lastVisit = moment(new Date(user.last_visit * 1000));
+    lastVisit.add(2, 'hours')
     return res.render('index', {
       username: req.session.login,
       counter: counterStr,
-      lastVisit: moment(new Date(user.last_visit * 1000)).format('MMMM Do YYYY, h:mm:ss a')
+      lastVisit: lastVisit.format('MMMM Do YYYY, h:mm:ss a')
     });
   }
   res.render('login');
